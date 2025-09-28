@@ -12,6 +12,11 @@
         
         /* Стилі для друку: приховуємо форму та показуємо лише документ */
         @media print {
+            /* ВАЖЛИВО: Встановлюємо портретну орієнтацію сторінки */
+            @page {
+                size: A4 portrait;
+            }
+            
             body { 
                 background: none; 
                 color: #000;
@@ -28,8 +33,8 @@
             }
             /* Імітуємо розмір листа А4 для кращого візуального сприйняття */
             .document-page {
-                width: 210mm; /* A4 width */
-                min-height: 297mm; /* A4 height */
+                width: 210mm; /* A4 width (portrait) */
+                min-height: 297mm; /* A4 height (portrait) */
                 margin: 0 auto;
                 padding: 20mm;
                 box-shadow: none;
