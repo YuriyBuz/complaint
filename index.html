@@ -224,19 +224,186 @@
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('complaintForm');
             const photosInput = document.getElementById('photos');
-// ... existing code ... -->
+            const imagePreview = document.getElementById('image-preview');
+            const generatePdfBtn = document.getElementById('generatePdfBtn');
             const sendEmailBtn = document.getElementById('sendEmailBtn');
             const loaderModal = document.getElementById('loader-modal');
 
-            // Встановлюємо поточну дату
-            const currentDateElement = document.getElementById('current-date');
-            const today = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            currentDateElement.textContent = `Сьогодні: ${today.toLocaleDateString('uk-UA', options)}`;
+            // --- NEW LOGIC START ---
+
+            // Function to fetch an image via a CORS proxy and convert it to a Base64 data URL.
+            const getCorsImageAsBase64 = async (imageUrl) => {
+                // Using a public CORS proxy to bypass cross-origin restrictions.
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+                try {
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch image through proxy. Status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (error) {
+                    console.error('CORS Image Fetch Error:', error);
+                    // Return the original URL as a fallback.
+                    return imageUrl;
+                }
+            };
+            
+            // Function to initialize the page, including the logo.
+            const initializePage = async () => {
+                // Set current date
+                const currentDateElement = document.getElementById('current-date');
+                const today = new Date();
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                currentDateElement.textContent = `Сьогодні: ${today.toLocaleDateString('uk-UA', options)}`;
+
+                // Fetch and set the logo
+                const originalLogoUrl = "https://foodline-production.com/wp-content/uploads/2021/10/3752781497_3752781497.webp";
+                const base64LogoUrl = await getCorsImageAsBase64(originalLogoUrl);
+                
+                const headerLogo = document.querySelector('header img');
+                const pdfLogo = document.querySelector('#pdf-content .company-logo img');
+
+                if (headerLogo) headerLogo.src = base64LogoUrl;
+                if (pdfLogo) pdfLogo.src = base64LogoUrl;
+            };
+
+            initializePage();
+
+            // --- NEW LOGIC END ---
 
             let uploadedImages = [];
             let generatedPdf = null;
 
             photosInput.addEventListener('change', (event) => {
-// ... existing code ... -->
+                imagePreview.innerHTML = '';
+                uploadedImages = [];
+                sendEmailBtn.disabled = true;
+                generatedPdf = null;
+                
+                const files = event.target.files;
+                if (files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            uploadedImages.push(e.target.result);
+                            const div = document.createElement('div');
+                            div.className = 'relative';
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'w-full h-auto object-cover rounded-lg shadow-md';
+                            div.appendChild(img);
+                            imagePreview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            generatePdfBtn.addEventListener('click', async () => {
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                loaderModal.style.display = 'flex';
+                
+                // 1. Збираємо дані з форми
+                const supplier = document.getElementById('supplier').value;
+                const complaintNumber = document.getElementById('complaint_number').value;
+                const product = document.getElementById('product').value;
+                const description = document.getElementById('description').value;
+                const inspectorName = document.getElementById('inspector_name').value;
+                const currentDate = new Date().toLocaleDateString('uk-UA');
+
+                // 2. Заповнюємо прихований PDF-контейнер
+                document.getElementById('pdf-date').innerText = currentDate;
+                document.getElementById('pdf-supplier').innerText = supplier;
+                document.getElementById('pdf-complaint-number').innerText = `Рекламація № ${complaintNumber}`;
+                document.getElementById('pdf-product').innerText = product;
+                document.getElementById('pdf-description').innerText = description;
+                document.getElementById('pdf-inspector-name').innerText = inspectorName;
+
+                const pdfImagesContainer = document.getElementById('pdf-images-container');
+                pdfImagesContainer.innerHTML = '';
+                uploadedImages.forEach(src => {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    pdfImagesContainer.appendChild(img);
+                });
+
+                // 3. Генеруємо PDF
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdfContentElement = document.getElementById('pdf-content');
+
+                    const canvas = await html2canvas(pdfContentElement, {
+                        scale: 2,
+                        useCORS: true 
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const canvasWidth = canvas.width;
+                    const canvasHeight = canvas.height;
+                    const ratio = canvasHeight / canvasWidth;
+                    const imgHeight = pdfWidth * ratio;
+                    
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+
+                    while (heightLeft > 0) {
+                        position = position - pdfHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                        heightLeft -= pdfHeight;
+                    }
+                    
+                    const fileName = `Reklamatsiya_${complaintNumber.replace('/', '-')}_${supplier}.pdf`;
+                    pdf.save(fileName);
+                    
+                    generatedPdf = pdf.output('blob');
+                    sendEmailBtn.disabled = false;
+                } catch (error) {
+                    console.error("Помилка при генерації PDF:", error);
+                    alert("Не вдалося створити PDF. Спробуйте ще раз.");
+                } finally {
+                     loaderModal.style.display = 'none';
+                }
+
+            });
+            
+            sendEmailBtn.addEventListener('click', () => {
+                if (!generatedPdf) {
+                    alert("Спочатку згенеруйте PDF-файл.");
+                    return;
+                }
+
+                const complaintNumber = document.getElementById('complaint_number').value;
+                const product = document.getElementById('product').value;
+
+                const subject = `Рекламація № ${complaintNumber} щодо продукції: ${product}`;
+                const body = `Доброго дня.\n\nНадсилаємо вам рекламацію щодо якості поставленої продукції.\nДеталі в прикріпленому файлі.\n\nЗ повагою,\n${document.getElementById('inspector_name').value}\nПП "ФУДЛАЙН ПРОДАКШН"`;
+                
+                const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                alert("Зараз відкриється ваш поштовий клієнт. Будь ласка, вкажіть адресу отримувача та вручну прикріпіть до листа щойно завантажений PDF-файл.");
+
+                window.location.href = mailtoLink;
+            });
+        });
+    </script>
+</body>
+</html>
 
