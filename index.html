@@ -125,7 +125,7 @@
 
         <!-- Кнопки для керування друком (спочатку приховані) -->
         <div id="print-controls" class="hidden text-center mt-6 no-print">
-             <p class="mb-4 text-gray-600">Документ готовий. Натисніть "Друк", щоб зберегти його як PDF, або "Поділитися".</p>
+             <p class="mb-4 text-gray-600">Документ готовий. Натисніть "Друк", щоб надійно зберегти його як PDF.</p>
              <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button type="button" id="printBtn" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 transition">
                     <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -146,6 +146,9 @@
                     Редагувати
                 </button>
             </div>
+             <p id="share-warning" class="text-xs text-gray-500 mt-3 text-center hidden">
+                <b>Порада:</b> Функція "Поділитися" може блокуватися браузером. Якщо вона не спрацювала, будь ласка, скористайтеся надійнішим методом "Друк / Зберегти як PDF" і надішліть файл вручну.
+            </p>
         </div>
     </div>
     
@@ -169,6 +172,7 @@
             const loaderModal = document.getElementById('loader-modal');
             const mainFormContainer = document.getElementById('main-form-container');
             const printVersionContainer = document.getElementById('print-version');
+            const shareWarning = document.getElementById('share-warning');
             
             let uploadedImages = [];
 
@@ -282,9 +286,9 @@
                 printVersionContainer.classList.remove('hidden');
                 printControls.classList.remove('hidden');
 
-                // Показати кнопку "Поділитися", якщо браузер підтримує Web Share API
                 if (navigator.share) {
                     shareBtn.style.display = 'inline-flex';
+                    shareWarning.classList.remove('hidden');
                 }
             });
             
@@ -321,7 +325,7 @@
                     }
 
                 } catch (error) {
-                    if (error.name !== 'AbortError') { // Не показувати помилку, якщо користувач сам закрив вікно "Поділитися"
+                    if (error.name !== 'AbortError') { 
                          alert(`Не вдалося поділитися файлом. Помилка: ${error.message}`);
                     }
                 } finally {
@@ -339,6 +343,7 @@
                 printVersionContainer.classList.add('hidden');
                 printControls.classList.add('hidden');
                 shareBtn.style.display = 'none';
+                shareWarning.classList.add('hidden');
             });
 
             initializePage();
