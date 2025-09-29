@@ -3,352 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форма Створення Рекламацій</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Додано бібліотеку для генерації PDF для функції "Поділитися" -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>Створення Рекламації</title>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
+        /* Базові стилі для форми */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        .header-date {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        input, textarea, button, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .form-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            width: 100%; /* Full width by default */
+        }
+        @media (min-width: 600px) {
+            .form-field {
+                width: calc(50% - 10px); /* Two columns on wider screens */
+            }
+        }
         
-        /* Стилі для друку */
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            border: 1px dashed #ccc;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 120px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .image-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #print-content {
+            display: none; /* Спочатку приховано */
+            padding: 20px;
+            line-height: 1.6;
+        }
+        #print-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .text-section p {
+            margin-bottom: 8px;
+        }
+
+        /* Стилі для друку/експорту в PDF */
         @media print {
             body {
                 background-color: white;
+                margin: 0;
             }
-            .no-print {
-                display: none !important;
+            .container, #main-form, .button-group {
+                display: none; /* Приховуємо форму та кнопки */
             }
-            #print-version {
-                display: block !important;
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0 !important;
+            #print-content {
+                display: block !important; /* Показуємо контент для друку */
             }
-            #main-form-container {
-                display: none !important;
-            }
-            .photos-section-print {
-                page-break-before: always;
+            /* Налаштування полів для друку */
+            @page {
+                size: A4;
+                margin: 1.5cm;
             }
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-
-    <div class="container mx-auto max-w-4xl p-4 sm:p-6 md:p-8">
+<body>
+    <div class="container">
+        <!-- Заголовок згідно з макетом -->
+        <h1>ПП "ФУДЛАЙН ПРОДАКШН"</h1>
+        <h2>Створення Рекламації</h2>
+        <p class="header-date">Сьогодні: <span id="current-date-header"></span></p>
         
-        <!-- Основний контейнер з формою -->
-        <div id="main-form-container">
-            <header class="text-center mb-8 no-print">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">ПП "ФУДЛАЙН ПРОДАКШН"</h2>
-                <h1 class="text-3xl font-bold text-gray-700">Створення Рекламації</h1>
-                <p id="current-date" class="text-gray-500 mt-2"></p>
-            </header>
+        <!-- Форма для заповнення -->
+        <form id="main-form">
+            <!-- Постачальник & ПІБ Контролера якості (2 колонки) -->
+            <div class="form-grid">
+                <!-- Постачальник -->
+                <div class="form-field">
+                    <label for="supplier">Постачальник</label>
+                    <input type="text" id="supplier" placeholder="Назва компанії-постачальника" required>
+                </div>
+                <!-- ПІБ Контролера якості -->
+                <div class="form-field">
+                    <label for="quality-controller">ПІБ Контролера якості</label>
+                    <select id="quality-controller" required>
+                        <option value="" disabled selected>Виберіть контролера</option>
+                        <option value="Соботович Лілія">Соботович Лілія</option>
+                        <option value="Огаркова Марія">Огаркова Марія</option>
+                    </select>
+                </div>
+            </div>
 
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
-                <form id="complaintForm">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-6">
-                            <div>
-                                <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Постачальник</label>
-                                <input type="text" id="supplier" name="supplier" placeholder="Назва компанії-постачальника" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                            </div>
-                             <div>
-                                <label for="complaint_number" class="block text-sm font-medium text-gray-700 mb-1">Номер Рекламації</label>
-                                <input type="text" id="complaint_number" name="complaint_number" placeholder="Напр. 09/02" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                            </div>
-                            <div>
-                                <label for="product" class="block text-sm font-medium text-gray-700 mb-1">Назва Продукції / Артикул</label>
-                                <input type="text" id="product" name="product" placeholder="Напр. Тара «PL» 500мл" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                            </div>
-                        </div>
-                        <div class="space-y-6">
-                            <div>
-                                <label for="inspector_name" class="block text-sm font-medium text-gray-700 mb-1">ПІБ Контролера якості</label>
-                                <select id="inspector_name" name="inspector_name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white" required>
-                                    <option value="" disabled selected>Виберіть контролера</option>
-                                    <option value="Огаркова Марія">Огаркова Марія</option>
-                                    <option value="Соботович Ліля">Соботович Ліля</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Суть проблеми</label>
-                                <textarea id="description" name="description" rows="5" placeholder="Детально опишіть проблему..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required></textarea>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Номер Рекламації & Суть проблеми (розміщені один за одним) -->
+            
+            <div class="form-grid">
+                <!-- Номер Рекламації -->
+                <div class="form-field">
+                    <label for="claim-number">Номер Рекламації</label>
+                    <input type="text" id="claim-number" placeholder="Напр. 09/02" required>
+                </div>
+                <!-- Суть проблеми (Textarea) -->
+                <div class="form-field">
+                    <label for="claim-text">Суть проблеми</label>
+                    <textarea id="claim-text" rows="5" placeholder="Детально опишіть проблему..." required></textarea>
+                </div>
+            </div>
 
-                    <div class="mt-8">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Фотографії дефекту</label>
-                        <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3-3a4 4 0 00-5.656 0L28 28M8 32l9-9a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                                <div class="flex text-sm text-gray-600">
-                                    <label for="photos" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
-                                        <span>Завантажити файли</span>
-                                        <input id="photos" name="photos" type="file" class="sr-only" accept="image/*" multiple>
-                                    </label>
-                                    <p class="pl-1">або зробіть фото</p>
-                                </div>
-                                <p class="text-xs text-gray-500">PNG, JPG, до 10MB</p>
-                            </div>
-                        </div>
-                        <div id="image-preview" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-                    </div>
+            <!-- Назва Продукції / Артикул -->
+            <label for="product-name">Назва Продукції / Артикул</label>
+            <input type="text" id="product-name" placeholder="Напр. Тара «PL» 500мл" required>
 
-                    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <button type="button" id="prepareBtn" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition">
-                            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            Підготувати до друку
-                        </button>
-                    </div>
-                </form>
+            <!-- Фотографії дефекту -->
+            <label for="claim-photos">Фотографії дефекту (до 5)</label>
+            <input type="file" id="claim-photos" multiple accept="image/*" onchange="previewImages()">
+            <div id="image-preview" class="image-preview"></div>
+
+            <!-- Кнопка Переглянути/Друк -->
+            <button type="button" onclick="prepareForPrint()">Переглянути документ / Підготувати до друку</button>
+        </form>
+
+        <!-- Контент, що буде надруковано або збережено в PDF -->
+        <div id="print-content">
+            <!-- Заголовок у документі -->
+            <h2>Рекламація</h2>
+            <div class="text-section">
+                <p><strong>Постачальник:</strong> <span id="print-supplier"></span></p>
+                <p><strong>Номер Рекламації:</strong> <span id="print-claim-number"></span></p>
+                <p><strong>Назва Продукції / Артикул:</strong> <span id="print-product-name"></span></p>
+                <p><strong>Контролер якості:</strong> <span id="print-controller"></span></p>
+                <p><strong>Дата створення:</strong> <span id="print-date"></span></p>
+            </div>
+            <hr>
+            <h3>Суть проблеми</h3>
+            <p id="print-claim-text"></p>
+            <hr>
+            <h3>Фотографії дефекту</h3>
+            <div id="print-photos"></div>
+            
+            <!-- Група кнопок для керування документом -->
+            <div class="button-group" style="display: flex;">
+                <button type="button" onclick="shareOrPrint()" id="share-print-btn">Поділитися / Друк</button>
+                <button type="button" onclick="editDocument()" style="background-color: #6c757d;">Редагувати</button>
             </div>
         </div>
-
-        <!-- Контейнер для версії для друку (спочатку прихований) -->
-        <div id="print-version" class="hidden bg-white p-8">
-            <!-- Вміст генерується динамічно -->
-        </div>
-
-        <!-- Кнопки для керування друком (спочатку приховані) -->
-        <div id="print-controls" class="hidden text-center mt-6 no-print">
-             <p class="mb-4 text-gray-600">Документ готовий. Натисніть "Друк", щоб надійно зберегти його як PDF.</p>
-             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button type="button" id="printBtn" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 transition">
-                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6 18.25m0 0l2.24 2.24m-2.24-2.24L8.24 16m-2.24 2.25L6 16m0 0l2.24-2.24m-2.24 2.24L8.24 13.829m10.56 0L18 18.25m0 0l2.24 2.24m-2.24-2.24L20.24 16m-2.24 2.25L18 16m0 0l2.24-2.24m-2.24 2.24L20.24 13.829M18 18.25L16 16m2.24 2.24l2.24-2.24M12 6.75v10.5m-3.75-10.5H12m3.75 0H12m-3.75 0L12 3m3.75 0L12 3m0 0L8.25 6.75M12 3l3.75 3.75" />
-                    </svg>
-                    Друк / Зберегти як PDF
-                </button>
-                <button type="button" id="shareBtn" class="w-full sm:w-auto hidden items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-500 hover:bg-blue-600 transition">
-                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.195.025.39.042.582.057m-3.468 0c0-.196.023-.39.068-.581m3.332 0c.203.006.408.006.614 0l.445-.027m-4.522 0l-.14-.022m-3.184 2.14a2.25 2.25 0 000 2.186m0-2.186c.202-.025.405-.042.608-.057m0 0c.324.01.65.01.974 0m-1.582 0c-.206 0-.41 0-.614 0l-.445.027m4.522 0l.14.022m3.185-2.14a2.25 2.25 0 000-2.186m0 2.186c-.202.025-.405.042-.608.057m0 0c-.324-.01-.65-.01-.974 0m1.582 0c.206 0 .41 0 .614 0l.445-.027m-4.522 0l-.14-.022" />
-                    </svg>
-                    Поділитися у месенджер
-                </button>
-                <button type="button" id="editBtn" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition">
-                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                    </svg>
-                    Редагувати
-                </button>
-            </div>
-             <p id="share-warning" class="text-xs text-gray-500 mt-3 text-center hidden">
-                <b>Порада:</b> Функція "Поділитися" може блокуватися браузером. Якщо вона не спрацювала, будь ласка, скористайтеся надійнішим методом "Друк / Зберегти як PDF" і надішліть файл вручну.
-            </p>
-        </div>
     </div>
-    
-    <div id="loader-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
-            <div class="loader mx-auto"></div>
-            <p class="mt-4 text-gray-600">Обробка зображень...</p>
-        </div>
-    </div>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('complaintForm');
-            const photosInput = document.getElementById('photos');
-            const imagePreview = document.getElementById('image-preview');
-            const prepareBtn = document.getElementById('prepareBtn');
-            const printControls = document.getElementById('print-controls');
-            const printBtn = document.getElementById('printBtn');
-            const editBtn = document.getElementById('editBtn');
-            const shareBtn = document.getElementById('shareBtn');
-            const loaderModal = document.getElementById('loader-modal');
-            const mainFormContainer = document.getElementById('main-form-container');
-            const printVersionContainer = document.getElementById('print-version');
-            const shareWarning = document.getElementById('share-warning');
-            
-            let uploadedImages = [];
-
-            const initializePage = () => {
-                document.getElementById('current-date').textContent = `Сьогодні: ${new Date().toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-            };
-
-            const resizeImage = (file, maxWidth = 800) => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.src = event.target.result;
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const { width, height } = img;
-                            canvas.width = maxWidth;
-                            canvas.height = maxWidth / (width / height);
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.85));
-                        };
-                        img.onerror = reject;
-                    };
-                    reader.onerror = reject;
-                });
-            };
-
-            photosInput.addEventListener('change', async (event) => {
-                imagePreview.innerHTML = '';
-                uploadedImages = [];
-                
-                const files = Array.from(event.target.files);
-                if (files.length > 0) {
-                    loaderModal.querySelector('p').textContent = 'Обробка зображень...';
-                    loaderModal.classList.remove('hidden');
-                    loaderModal.style.display = 'flex';
-                    try {
-                        const resizePromises = files.map(file => resizeImage(file));
-                        uploadedImages = await Promise.all(resizePromises);
-                        
-                        uploadedImages.forEach(dataUrl => {
-                            const img = document.createElement('img');
-                            img.src = dataUrl;
-                            img.className = 'w-full h-auto object-cover rounded-lg shadow-md';
-                            imagePreview.appendChild(img);
-                        });
-                    } catch (error) {
-                        alert(`Не вдалося обробити зображення: ${error.message}`);
-                    } finally {
-                        loaderModal.classList.add('hidden');
-                        loaderModal.style.display = 'none';
-                    }
-                }
-            });
-
-            prepareBtn.addEventListener('click', () => {
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                
-                const supplier = document.getElementById('supplier').value;
-                const complaintNumber = document.getElementById('complaint_number').value;
-                const product = document.getElementById('product').value;
-                const inspectorName = document.getElementById('inspector_name').value;
-                const description = document.getElementById('description').value.replace(/\n/g, '<br>');
-
-                let imagesHTML = '';
-                if (uploadedImages.length > 0) {
-                    imagesHTML += `<div class="photos-section-print"><h2 class="text-xl font-bold mt-8 mb-4">Додатки: Фотографії дефекту</h2><div class="grid grid-cols-2 gap-4">`;
-                    uploadedImages.forEach(dataUrl => {
-                        imagesHTML += `<div><img src="${dataUrl}" class="w-full h-auto border rounded-lg"></div>`;
-                    });
-                    imagesHTML += `</div></div>`;
-                }
-
-                const printHTML = `
-                    <div class="flex justify-between items-start mb-12">
-                        <div class="font-bold text-lg">ПП "ФУДЛАЙН ПРОДАКШН"</div>
-                        <div class="text-right text-sm">
-                            <p class="font-bold">${supplier}</p>
-                            <p>${new Date().toLocaleDateString('uk-UA')}</p>
-                        </div>
-                    </div>
-                    <div class="text-center mb-10">
-                        <h1 class="text-2xl font-bold">Рекламація № ${complaintNumber}</h1>
-                        <p class="text-lg">щодо якості продукції</p>
-                    </div>
-                    <div class="space-y-6 text-base">
-                        <p>Цим листом повідомляємо про виявлення невідповідності якості в поставленій продукції — <strong>${product}</strong>.</p>
-                        <div>
-                            <h2 class="text-lg font-bold mb-2">Суть проблеми:</h2>
-                            <p>${description}</p>
-                        </div>
-                         <div>
-                            <h2 class="text-lg font-bold mb-2">Вимога:</h2>
-                            <p>Просимо терміново розглянути цю рекламацію та повідомити про ваше рішення. Очікуємо на вашу відповідь та пропозиції щодо вирішення проблеми протягом 3 робочих днів.</p>
-                        </div>
-                    </div>
-                     <div class="mt-24 pt-8 border-t-2 border-gray-300 flex justify-between items-center text-sm">
-                        <span>Контролер з якості</span>
-                        <span class="font-bold">${inspectorName}</span>
-                    </div>
-                    ${imagesHTML}
-                `;
-
-                printVersionContainer.innerHTML = printHTML;
-                mainFormContainer.classList.add('hidden');
-                printVersionContainer.classList.remove('hidden');
-                printControls.classList.remove('hidden');
-
-                if (navigator.share) {
-                    shareBtn.style.display = 'inline-flex';
-                    shareWarning.classList.remove('hidden');
-                }
-            });
-            
-            shareBtn.addEventListener('click', async () => {
-                const complaintNumber = document.getElementById('complaint_number').value;
-                const supplier = document.getElementById('supplier').value;
-                const fileName = `Reklamatsiya_${complaintNumber.replace(/[\/\\]/g, '-')}_${supplier}.pdf`;
-
-                loaderModal.querySelector('p').textContent = 'Готуємо файл для відправки...';
-                loaderModal.classList.remove('hidden');
-                loaderModal.style.display = 'flex';
-
-                try {
-                    const element = document.getElementById('print-version');
-                    const opt = {
-                        margin:       [15, 10, 15, 10], // top, left, bottom, right in mm
-                        filename:     fileName,
-                        image:        { type: 'jpeg', quality: 0.95 },
-                        html2canvas:  { scale: 2, useCORS: true, logging: false },
-                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-
-                    const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-                    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-                    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                        await navigator.share({
-                            title: `Рекламація № ${complaintNumber}`,
-                            text: `Рекламація щодо продукції від ПП "ФУДЛАЙН ПРОДАКШН"`,
-                            files: [pdfFile],
-                        });
-                    } else {
-                        alert('Ваш браузер не підтримує відправку файлів. Будь ласка, збережіть PDF через функцію "Друк" та надішліть його вручну.');
-                    }
-
-                } catch (error) {
-                    if (error.name !== 'AbortError') { 
-                         alert(`Не вдалося поділитися файлом. Помилка: ${error.message}`);
-                    }
-                } finally {
-                    loaderModal.classList.add('hidden');
-                    loaderModal.style.display = 'none';
-                }
-            });
-
-            printBtn.addEventListener('click', () => {
-                window.print();
-            });
-
-            editBtn.addEventListener('click', () => {
-                mainFormContainer.classList.remove('hidden');
-                printVersionContainer.classList.add('hidden');
-                printControls.classList.add('hidden');
-                shareBtn.style.display = 'none';
-                shareWarning.classList.add('hidden');
-            });
-
-            initializePage();
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Встановлення поточної дати у заголовок
+            document.getElementById('current-date-header').textContent = new Date().toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
         });
+
+        // Функція для попереднього перегляду фотографій
+        function previewImages() {
+            const input = document.getElementById('claim-photos');
+            const preview = document.getElementById('image-preview');
+            preview.innerHTML = '';
+            
+            // Обмеження кількості фотографій
+            const files = Array.from(input.files).slice(0, 5); 
+
+            if (input.files.length > 5) {
+                console.warn("Додано більше 5 фото. Будуть використані лише перші 5.");
+            }
+
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Функція, яка готує сторінку до друку (виступає як "попередній перегляд")
+        function prepareForPrint() {
+            const form = document.getElementById('main-form');
+            // Перевірка валідності форми
+            if (!form.reportValidity()) {
+                return;
+            }
+
+            // Зчитування нових полів
+            const supplier = document.getElementById('supplier').value;
+            const controller = document.getElementById('quality-controller').value; 
+            const claimNumber = document.getElementById('claim-number').value;
+            const claimText = document.getElementById('claim-text').value;
+            const productName = document.getElementById('product-name').value;
+            const photosInput = document.getElementById('claim-photos');
+
+            // Заповнення полів у "документі"
+            document.getElementById('print-supplier').textContent = supplier;
+            document.getElementById('print-controller').textContent = controller; 
+            document.getElementById('print-claim-number').textContent = claimNumber;
+            document.getElementById('print-product-name').textContent = productName;
+            document.getElementById('print-claim-text').textContent = claimText;
+            document.getElementById('print-date').textContent = new Date().toLocaleDateString('uk-UA');
+
+            // Додавання фотографій
+            const photosContainer = document.getElementById('print-photos');
+            photosContainer.innerHTML = '';
+            
+            // Використовуємо лише перші 5 фото
+            const filesToPrint = Array.from(photosInput.files).slice(0, 5);
+
+            for (const file of filesToPrint) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    photosContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Приховуємо форму та показуємо контент для друку/перегляду
+            document.getElementById('main-form').style.display = 'none';
+            document.querySelector('.button-group').style.display = 'flex';
+            document.getElementById('print-content').style.display = 'block';
+
+            // Перевіряємо підтримку Web Share API і змінюємо текст кнопки
+            if (navigator.share) {
+                document.getElementById('share-print-btn').textContent = 'Поділитися / Друк';
+            } else {
+                document.getElementById('share-print-btn').textContent = 'Друк / Зберегти як PDF';
+            }
+        }
+
+        // Функція, що викликає діалог "Поділитися" або "Друк"
+        async function shareOrPrint() {
+            if (navigator.share) {
+                try {
+                    // Викликаємо системне меню "Поділитися"
+                    await navigator.share({
+                        title: 'Рекламація',
+                        text: `Рекламація від ${document.getElementById('print-supplier').textContent} (${document.getElementById('print-claim-number').textContent})`,
+                    });
+                } catch (error) {
+                    console.error('Помилка при спробі поділитися:', error);
+                    // Якщо помилка, або користувач скасував, запускаємо друк як запасний варіант
+                    window.print();
+                }
+            } else {
+                // На пристроях без Web Share API (наприклад, на десктопах), просто запускаємо друк
+                window.print();
+            }
+        }
+
+        // Функція для повернення до форми
+        function editDocument() {
+            document.getElementById('main-form').style.display = 'flex';
+            document.getElementById('print-content').style.display = 'none';
+        }
     </script>
 </body>
 </html>
-
