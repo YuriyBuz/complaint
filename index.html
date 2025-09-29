@@ -144,6 +144,55 @@
                 margin: 1.5cm;
             }
         }
+
+        /* Стилі для модального вікна (інструкції) */
+        #instruction-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 90%;
+            width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .modal-content ol {
+            text-align: left;
+            padding-left: 20px;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+        .modal-content li {
+            margin-bottom: 8px;
+        }
+        #close-modal-btn {
+            background-color: #28a745;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #close-modal-btn:hover {
+            background-color: #1e7e34;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -221,9 +270,26 @@
             
             <!-- Група кнопок для керування документом -->
             <div class="button-group" style="display: flex;">
+                <!-- Ця кнопка тепер викликає модальне вікно з інструкцією -->
                 <button type="button" onclick="shareOrPrint()" id="share-print-btn">Поділитися / Друк</button>
                 <button type="button" onclick="editDocument()" style="background-color: #6c757d;">Редагувати</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Інструктивне Модальне Вікно -->
+    <div id="instruction-modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Важливий крок: Створення PDF-файлу</h3>
+            <p>На жаль, месенджери не дозволяють **автоматично** прикріплювати щойно створений файл через обмеження безпеки.</p>
+            <p style="font-weight: bold; color: #dc3545;">Що потрібно зробити для надсилання:</p>
+            <ol>
+                <li>Натисніть **"Зрозуміло, почати"**.</li>
+                <li>У наступному системному вікні (Друк) оберіть **"Зберегти як PDF"**.</li>
+                <li>Збережіть файл на свій пристрій.</li>
+                <li>Після збереження відкрийте месенджер і **прикріпіть файл вручну**.</li>
+            </ol>
+            <button id="close-modal-btn">Зрозуміло, почати</button>
         </div>
     </div>
 
@@ -265,7 +331,7 @@
                 return;
             }
 
-            // Зчитування нових полів
+            // Зчитування полів
             const supplier = document.getElementById('supplier').value;
             const controller = document.getElementById('quality-controller').value; 
             const claimNumber = document.getElementById('claim-number').value;
@@ -303,32 +369,26 @@
             document.querySelector('.button-group').style.display = 'flex';
             document.getElementById('print-content').style.display = 'block';
 
-            // Перевіряємо підтримку Web Share API і змінюємо текст кнопки
-            if (navigator.share) {
-                document.getElementById('share-print-btn').textContent = 'Поділитися / Друк';
-            } else {
-                document.getElementById('share-print-btn').textContent = 'Друк / Зберегти як PDF';
+            // Перевірка, чи не відображається модальне вікно (на випадок подвійного натискання)
+            if (document.getElementById('instruction-modal').style.display !== 'flex') {
+                // Встановлюємо текст кнопки відповідно до логіки, хоча основний функціонал тепер через модалку
+                document.getElementById('share-print-btn').textContent = navigator.share ? 'Поділитися / Друк' : 'Друк / Зберегти як PDF';
             }
         }
 
-        // Функція, що викликає діалог "Поділитися" або "Друк"
-        async function shareOrPrint() {
-            if (navigator.share) {
-                try {
-                    // Викликаємо системне меню "Поділитися"
-                    await navigator.share({
-                        title: 'Рекламація',
-                        text: `Рекламація від ${document.getElementById('print-supplier').textContent} (${document.getElementById('print-claim-number').textContent})`,
-                    });
-                } catch (error) {
-                    console.error('Помилка при спробі поділитися:', error);
-                    // Якщо помилка, або користувач скасував, запускаємо друк як запасний варіант
-                    window.print();
-                }
-            } else {
-                // На пристроях без Web Share API (наприклад, на десктопах), просто запускаємо друк
+        // Функція, що викликає модальне вікно з інструкцією
+        function shareOrPrint() {
+            // Показуємо модальне вікно
+            document.getElementById('instruction-modal').style.display = 'flex';
+
+            // Додаємо обробник для кнопки "Зрозуміло, почати"
+            document.getElementById('close-modal-btn').onclick = function() {
+                // Ховаємо модальне вікно
+                document.getElementById('instruction-modal').style.display = 'none';
+
+                // Запускаємо системний діалог друку/збереження PDF
                 window.print();
-            }
+            };
         }
 
         // Функція для повернення до форми
