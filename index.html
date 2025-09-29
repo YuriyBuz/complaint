@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Створення Рекламації</title>
+    <!-- Підключаємо бібліотеку для перетворення HTML на Canvas/Зображення -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* Базові стилі для форми */
         body {
@@ -111,9 +113,13 @@
             margin-top: 20px;
         }
         #print-content {
+            /* Важливо: додаємо білий фон, щоб зображення не було прозорим */
+            background-color: white; 
             display: none; /* Спочатку приховано */
             padding: 20px;
             line-height: 1.6;
+            border: 1px solid #eee; /* Додаємо рамку для кращого вигляду перед перетворенням */
+            border-radius: 8px;
         }
         #print-content img {
             max-width: 100%;
@@ -126,7 +132,7 @@
             margin-bottom: 8px;
         }
 
-        /* Стилі для друку/експорту в PDF */
+        /* Стилі для друку/експорту в PDF - залишаємо як запасний варіант */
         @media print {
             body {
                 background-color: white;
@@ -137,61 +143,13 @@
             }
             #print-content {
                 display: block !important; /* Показуємо контент для друку */
+                border: none; /* Прибираємо рамку при друку */
             }
             /* Налаштування полів для друку */
             @page {
                 size: A4;
                 margin: 1.5cm;
             }
-        }
-
-        /* Стилі для модального вікна (інструкції) */
-        #instruction-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s;
-        }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 90%;
-            width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            text-align: center;
-        }
-        .modal-content h3 {
-            margin-top: 0;
-            color: #007bff;
-        }
-        .modal-content ol {
-            text-align: left;
-            padding-left: 20px;
-            margin-top: 15px;
-            margin-bottom: 25px;
-        }
-        .modal-content li {
-            margin-bottom: 8px;
-        }
-        #close-modal-btn {
-            background-color: #28a745;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        #close-modal-btn:hover {
-            background-color: #1e7e34;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
     </style>
 </head>
@@ -270,28 +228,14 @@
             
             <!-- Група кнопок для керування документом -->
             <div class="button-group" style="display: flex;">
-                <!-- Ця кнопка тепер викликає модальне вікно з інструкцією -->
-                <button type="button" onclick="shareOrPrint()" id="share-print-btn">Поділитися / Друк</button>
+                <!-- Ця кнопка тепер генерує PNG і намагається поділитися ним -->
+                <button type="button" onclick="shareOrPrint()" id="share-print-btn">Поділитися як PNG / Друк</button>
                 <button type="button" onclick="editDocument()" style="background-color: #6c757d;">Редагувати</button>
             </div>
         </div>
     </div>
 
-    <!-- Інструктивне Модальне Вікно -->
-    <div id="instruction-modal" style="display: none;">
-        <div class="modal-content">
-            <h3>Важливий крок: Створення PDF-файлу</h3>
-            <p>На жаль, месенджери не дозволяють **автоматично** прикріплювати щойно створений файл через обмеження безпеки.</p>
-            <p style="font-weight: bold; color: #dc3545;">Що потрібно зробити для надсилання:</p>
-            <ol>
-                <li>Натисніть **"Зрозуміло, почати"**.</li>
-                <li>У наступному системному вікні (Друк) оберіть **"Зберегти як PDF"**.</li>
-                <li>Збережіть файл на свій пристрій.</li>
-                <li>Після збереження відкрийте месенджер і **прикріпіть файл вручну**.</li>
-            </ol>
-            <button id="close-modal-btn">Зрозуміло, почати</button>
-        </div>
-    </div>
+    <!-- Інструктивне Модальне Вікно Видалено -->
 
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -305,7 +249,6 @@
             const preview = document.getElementById('image-preview');
             preview.innerHTML = '';
             
-            // Обмеження кількості фотографій
             const files = Array.from(input.files).slice(0, 5); 
 
             if (input.files.length > 5) {
@@ -323,15 +266,25 @@
             }
         }
 
+        // Функція для завантаження зображення
+        function downloadCanvasAsImage(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log(`Файл ${filename} успішно завантажено!`);
+        }
+
+
         // Функція, яка готує сторінку до друку (виступає як "попередній перегляд")
         function prepareForPrint() {
             const form = document.getElementById('main-form');
-            // Перевірка валідності форми
             if (!form.reportValidity()) {
                 return;
             }
 
-            // Зчитування полів
             const supplier = document.getElementById('supplier').value;
             const controller = document.getElementById('quality-controller').value; 
             const claimNumber = document.getElementById('claim-number').value;
@@ -339,7 +292,6 @@
             const productName = document.getElementById('product-name').value;
             const photosInput = document.getElementById('claim-photos');
 
-            // Заповнення полів у "документі"
             document.getElementById('print-supplier').textContent = supplier;
             document.getElementById('print-controller').textContent = controller; 
             document.getElementById('print-claim-number').textContent = claimNumber;
@@ -347,11 +299,9 @@
             document.getElementById('print-claim-text').textContent = claimText;
             document.getElementById('print-date').textContent = new Date().toLocaleDateString('uk-UA');
 
-            // Додавання фотографій
             const photosContainer = document.getElementById('print-photos');
             photosContainer.innerHTML = '';
             
-            // Використовуємо лише перші 5 фото
             const filesToPrint = Array.from(photosInput.files).slice(0, 5);
 
             for (const file of filesToPrint) {
@@ -364,31 +314,60 @@
                 reader.readAsDataURL(file);
             }
 
-            // Приховуємо форму та показуємо контент для друку/перегляду
             document.getElementById('main-form').style.display = 'none';
             document.querySelector('.button-group').style.display = 'flex';
             document.getElementById('print-content').style.display = 'block';
 
-            // Перевірка, чи не відображається модальне вікно (на випадок подвійного натискання)
-            if (document.getElementById('instruction-modal').style.display !== 'flex') {
-                // Встановлюємо текст кнопки відповідно до логіки, хоча основний функціонал тепер через модалку
-                document.getElementById('share-print-btn').textContent = navigator.share ? 'Поділитися / Друк' : 'Друк / Зберегти як PDF';
-            }
+            // Оновлюємо текст кнопки для відображення поточної логіки
+            document.getElementById('share-print-btn').textContent = navigator.share ? 'Поділитися як PNG / Друк' : 'Завантажити PNG / Друк';
         }
 
-        // Функція, що викликає модальне вікно з інструкцією
-        function shareOrPrint() {
-            // Показуємо модальне вікно
-            document.getElementById('instruction-modal').style.display = 'flex';
+        // Функція, що генерує PNG-файл і намагається його поділитися
+        async function shareOrPrint() {
+            const printContent = document.getElementById('print-content');
+            const claimNumber = document.getElementById('print-claim-number').textContent;
+            const filename = `Reklamatsia_${claimNumber || 'No_Number'}.png`;
 
-            // Додаємо обробник для кнопки "Зрозуміло, почати"
-            document.getElementById('close-modal-btn').onclick = function() {
-                // Ховаємо модальне вікно
-                document.getElementById('instruction-modal').style.display = 'none';
+            // Використовуємо html2canvas для перетворення вмісту на зображення
+            // Важливо: обробка помилок усередині async/await та then/catch
+            try {
+                const canvas = await html2canvas(printContent, {
+                    scale: 2, // Вища якість зображення
+                    useCORS: true,
+                    logging: false,
+                    scrollY: -window.scrollY // Запобігає зміщенню прокрутки
+                });
+                
+                const dataUrl = canvas.toDataURL('image/png');
 
-                // Запускаємо системний діалог друку/збереження PDF
+                // 1. Спроба поділитися як файл (для мобільних пристроїв)
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([""], filename, { type: 'image/png' })] })) {
+                    // Перетворюємо Data URL на Blob для Web Share API
+                    const blob = await (await fetch(dataUrl)).blob();
+                    const file = new File([blob], filename, { type: 'image/png' });
+
+                    await navigator.share({
+                        files: [file],
+                        title: 'Рекламація ПП "ФУДЛАЙН ПРОДАКШН"',
+                        text: `Надсилаю рекламацію № ${claimNumber} у форматі зображення.`,
+                    });
+                    console.log('Зображення успішно надіслано через Web Share API.');
+
+                } else {
+                    // 2. Запасний варіант: Завантаження PNG (на десктопах або при відсутності підтримки)
+                    console.log('Web Share API не підтримується або не може поділитися файлами. Запускаємо завантаження.');
+                    downloadCanvasAsImage(dataUrl, filename);
+                    
+                    // Як останній запасний варіант пропонуємо друк (стандартний PDF)
+                    // window.print();
+                }
+
+            } catch (error) {
+                console.error("Помилка генерації зображення:", error);
+                // Якщо html2canvas не спрацював, повертаємося до системного друку
+                console.log("Повернення до системного друку (PDF).");
                 window.print();
-            };
+            }
         }
 
         // Функція для повернення до форми
