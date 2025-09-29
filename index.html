@@ -112,44 +112,133 @@
             gap: 10px;
             margin-top: 20px;
         }
+
+        /* ----- СТИЛІ ДЛЯ ФОРМАТУ A4 (print-content) ----- */
         #print-content {
-            /* Важливо: додаємо білий фон, щоб зображення не було прозорим */
+            /* Базові розміри, що імітують A4 (800px - приблизно 75% ширини A4) */
             background-color: white; 
-            display: none; /* Спочатку приховано */
-            padding: 20px;
-            line-height: 1.6;
-            border: 1px solid #eee; /* Додаємо рамку для кращого вигляду перед перетворенням */
+            display: none; 
+            padding: 40px; /* Великі поля як на документі A4 */
+            line-height: 1.5;
+            border: 1px solid #eee;
             border-radius: 8px;
+            /* Мінімальна висота для імітації листа */
+            min-height: 1000px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-size: 12pt;
+            position: relative;
         }
-        #print-content img {
-            max-width: 100%;
+        
+        /* НОВИЙ СТИЛЬ для заголовка з логотипом */
+        .document-top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            font-size: 11pt;
+        }
+        .document-top-header .logo-container img {
+            max-width: 150px; /* Розмір логотипу */
             height: auto;
-            display: block;
-            margin-bottom: 10px;
-            border-radius: 4px;
+            margin-top: -15px; /* Невеликий відступ вгору */
         }
-        .text-section p {
-            margin-bottom: 8px;
+        .document-top-header .meta-right-block {
+            text-align: right;
+            line-height: 1.6;
+        }
+        .document-top-header .meta-right-block p {
+            margin: 0;
+        }
+        /* Кінець нового стилю */
+
+        #print-content h2 {
+            text-align: left;
+            margin-bottom: 20px;
+            font-size: 18pt;
+            font-weight: bold;
+        }
+        #print-content h3 {
+            font-size: 14pt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        /* Видаляємо старий .document-meta, він більше не потрібен */
+
+        .document-body {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+        .document-footer {
+            margin-top: 50px;
+        }
+        .document-footer p {
+            margin: 0;
+            font-size: 11pt;
+        }
+        .signature-block {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            font-size: 11pt;
+        }
+        .signature-block div {
+            flex-basis: 45%;
+            text-align: left;
+        }
+        .signature-block .controller-signature {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        #print-photos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            justify-content: space-between;
+        }
+        #print-photos img {
+            max-width: 48%; /* Для двох зображень у рядку */
+            height: auto;
+            border: 1px solid #ddd;
+            padding: 5px;
         }
 
-        /* Стилі для друку/експорту в PDF - залишаємо як запасний варіант */
+        /* Стилі для друку/експорту в PDF */
         @media print {
             body {
                 background-color: white;
                 margin: 0;
             }
             .container, #main-form, .button-group {
-                display: none; /* Приховуємо форму та кнопки */
+                display: none;
             }
             #print-content {
-                display: block !important; /* Показуємо контент для друку */
-                border: none; /* Прибираємо рамку при друку */
+                display: block !important; 
+                width: 21cm; /* Реальний розмір A4 */
+                height: 29.7cm; /* Реальний розмір A4 */
+                padding: 1.5cm; /* Поля */
+                min-height: auto;
+                box-shadow: none;
+                border: none;
             }
-            /* Налаштування полів для друку */
+            #print-photos img {
+                max-width: 49%; /* Забезпечення двох колонок */
+            }
             @page {
                 size: A4;
                 margin: 1.5cm;
             }
+        }
+
+        /* Стиль для кнопки "Поділитися" */
+        #share-print-btn {
+            background-color: #28a745;
+        }
+        #share-print-btn:hover {
+            background-color: #1e7e34;
         }
     </style>
 </head>
@@ -208,23 +297,55 @@
             <button type="button" onclick="prepareForPrint()">Переглянути документ / Підготувати до друку</button>
         </form>
 
-        <!-- Контент, що буде надруковано або збережено в PDF -->
+        <!-- Контент, що буде надруковано або збережено в PNG/PDF -->
         <div id="print-content">
-            <!-- Заголовок у документі -->
-            <h2>Рекламація</h2>
-            <div class="text-section">
-                <p><strong>Постачальник:</strong> <span id="print-supplier"></span></p>
-                <p><strong>Номер Рекламації:</strong> <span id="print-claim-number"></span></p>
-                <p><strong>Назва Продукції / Артикул:</strong> <span id="print-product-name"></span></p>
-                <p><strong>Контролер якості:</strong> <span id="print-controller"></span></p>
-                <p><strong>Дата створення:</strong> <span id="print-date"></span></p>
+            
+            <!-- БЛОК: Логотип та мета-інформація -->
+            <div class="document-top-header">
+                <div class="logo-container">
+                    <!-- ЛОГОТИП КОМПАНІЇ -->
+                    <img src="https://foodline-production.com/wp-content/uploads/2021/10/3752781497_3752781497.webp" alt="Логотип компанії" id="print-logo" crossorigin="anonymous">
+                </div>
+                <div class="meta-right-block">
+                    <!-- Місце для даних Постачальника/Дати, вирівняне праворуч -->
+                    <p style="text-align: right; font-weight: bold;">ПП "ФУДЛАЙН ПРОДАКШН"</p>
+                    <p>Дата: <span id="print-date-only"></span></p>
+                    <p>Постачальник: <span id="print-supplier"></span></p>
+                </div>
             </div>
-            <hr>
-            <h3>Суть проблеми</h3>
-            <p id="print-claim-text"></p>
-            <hr>
-            <h3>Фотографії дефекту</h3>
+
+            <!-- Заголовок документа -->
+            <h2>Рекламація № <span id="print-claim-number"></span></h2>
+            <p style="font-weight: bold; margin-top: -15px;">щодо якості продукції</p>
+
+            <!-- Основний текст (Вступ) -->
+            <div class="document-body">
+                <p>Цим листом повідомляємо про виявлення невідповідності якості в поставленій продукції, а саме: <span id="print-product-name"></span>.</p>
+                
+                <h3>Суть проблеми:</h3>
+                <p id="print-claim-text"></p>
+                <p>Наявність цієї невідповідності робить неможливим технологічне використання такої продукції.</p>
+                
+                <h3>Додатки:</h3>
+                <p>До листа додаються фотоматеріали, що підтверджують наявність невідповідності.</p>
+                
+                <h3>Вимога:</h3>
+                <p>Просимо терміново розглянути цю рекламацію та повідомити про ваше рішення. Очікуємо на вашу відповідь та пропозиції щодо вирішення проблеми протягом 3 робочих днів.</p>
+            </div>
+            
+            <!-- Фотографії дефекту -->
             <div id="print-photos"></div>
+
+            <!-- Блок підпису -->
+            <div class="signature-block">
+                <div>
+                    <p>Контролер з якості</p>
+                    <p>ПП "ФУДЛАЙН ПРОДАКШН"</p>
+                </div>
+                <div class="controller-signature">
+                    <p><span id="print-controller"></span></p>
+                </div>
+            </div>
             
             <!-- Група кнопок для керування документом -->
             <div class="button-group" style="display: flex;">
@@ -234,8 +355,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Інструктивне Модальне Вікно Видалено -->
 
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -292,27 +411,41 @@
             const productName = document.getElementById('product-name').value;
             const photosInput = document.getElementById('claim-photos');
 
+            // Заповнення полів у "документі"
             document.getElementById('print-supplier').textContent = supplier;
             document.getElementById('print-controller').textContent = controller; 
             document.getElementById('print-claim-number').textContent = claimNumber;
             document.getElementById('print-product-name').textContent = productName;
             document.getElementById('print-claim-text').textContent = claimText;
-            document.getElementById('print-date').textContent = new Date().toLocaleDateString('uk-UA');
+            document.getElementById('print-date-only').textContent = new Date().toLocaleDateString('uk-UA', {day: '2-digit', month: '2-digit', year: '2-digit'});
 
+            // Додавання фотографій
             const photosContainer = document.getElementById('print-photos');
             photosContainer.innerHTML = '';
             
             const filesToPrint = Array.from(photosInput.files).slice(0, 5);
 
-            for (const file of filesToPrint) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    photosContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
+            // Використовуємо async/await для коректного відображення всіх фотографій перед конвертацією
+            let filesProcessed = 0;
+            const totalFiles = filesToPrint.length;
+
+            if (totalFiles > 0) {
+                filesToPrint.forEach((file) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        photosContainer.appendChild(img);
+                        filesProcessed++;
+                        // Це простий спосіб забезпечити, що всі зображення додані до DOM
+                        if (filesProcessed === totalFiles) {
+                            console.log('Усі файли завантажено для попереднього перегляду.');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
+
 
             document.getElementById('main-form').style.display = 'none';
             document.querySelector('.button-group').style.display = 'flex';
@@ -329,14 +462,20 @@
             const filename = `Reklamatsia_${claimNumber || 'No_Number'}.png`;
 
             // Використовуємо html2canvas для перетворення вмісту на зображення
-            // Важливо: обробка помилок усередині async/await та then/catch
             try {
+                // Додаємо тимчасовий стиль, щоб прибрати рамку кнопок з зображення
+                const buttons = printContent.querySelector('.button-group');
+                buttons.style.display = 'none';
+
                 const canvas = await html2canvas(printContent, {
-                    scale: 2, // Вища якість зображення
+                    scale: 3, // Підвищуємо якість до 3x
                     useCORS: true,
                     logging: false,
-                    scrollY: -window.scrollY // Запобігає зміщенню прокрутки
+                    scrollY: -window.scrollY
                 });
+                
+                // Після створення Canvas повертаємо кнопки
+                buttons.style.display = 'flex';
                 
                 const dataUrl = canvas.toDataURL('image/png');
 
@@ -358,14 +497,13 @@
                     console.log('Web Share API не підтримується або не може поділитися файлами. Запускаємо завантаження.');
                     downloadCanvasAsImage(dataUrl, filename);
                     
-                    // Як останній запасний варіант пропонуємо друк (стандартний PDF)
+                    // Залишаємо можливість друку PDF як останній запасний варіант
                     // window.print();
                 }
 
             } catch (error) {
                 console.error("Помилка генерації зображення:", error);
                 // Якщо html2canvas не спрацював, повертаємося до системного друку
-                console.log("Повернення до системного друку (PDF).");
                 window.print();
             }
         }
