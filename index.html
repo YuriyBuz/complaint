@@ -115,18 +115,33 @@
 
         /* ----- СТИЛІ ДЛЯ ФОРМАТУ A4 (print-content) ----- */
         #print-content {
-            /* Базові розміри, що імітують A4 (800px - приблизно 75% ширини A4) */
+            /* Фіксована ширина для імітації A4, щоб html2canvas не стискав на мобільному */
+            width: 800px; 
             background-color: white; 
             display: none; 
             padding: 40px; /* Великі поля як на документі A4 */
             line-height: 1.5;
             border: 1px solid #eee;
             border-radius: 8px;
-            /* Мінімальна висота для імітації листа */
             min-height: 1000px; 
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             font-size: 12pt;
             position: relative;
+            /* Додаємо простір для виправлення стиснення на мобільному */
+            box-sizing: content-box; 
+        }
+
+        @media (max-width: 840px) {
+             /* Дозволяємо контейнеру прокручуватися, якщо він ширший за екран телефону */
+            .container {
+                overflow-x: auto;
+                max-width: 100vw;
+            }
+            /* На мобільних екранах забезпечуємо, що документ все одно широкий */
+            #print-content {
+                width: 800px;
+                min-width: 800px; 
+            }
         }
         
         /* НОВИЙ СТИЛЬ для заголовка з логотипом */
@@ -148,6 +163,8 @@
         }
         .document-top-header .meta-right-block p {
             margin: 0;
+            /* Вирівнюємо мета-інформацію праворуч, як на макеті */
+            text-align: right;
         }
         /* Кінець нового стилю */
 
@@ -163,25 +180,34 @@
             margin-bottom: 10px;
         }
         
-        /* Видаляємо старий .document-meta, він більше не потрібен */
-
         .document-body {
             margin-top: 30px;
             margin-bottom: 30px;
             text-align: justify;
         }
-        .document-footer {
-            margin-top: 50px;
+
+        /* Вирівнювання Суті проблеми та Додатків */
+        .problem-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
-        .document-footer p {
-            margin: 0;
-            font-size: 11pt;
+        .problem-details > div {
+            width: 100%;
         }
+        .document-body h3 {
+            width: 100%; /* Заголовок на всю ширину */
+        }
+        .document-body p {
+            width: 100%;
+        }
+        
         .signature-block {
             display: flex;
             justify-content: space-between;
             margin-top: 50px;
             font-size: 11pt;
+            width: 100%;
         }
         .signature-block div {
             flex-basis: 45%;
@@ -197,7 +223,7 @@
             flex-wrap: wrap;
             gap: 15px;
             margin-top: 15px;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
         #print-photos img {
             max-width: 48%; /* Для двох зображень у рядку */
@@ -304,7 +330,10 @@
             <div class="document-top-header">
                 <div class="logo-container">
                     <!-- ЛОГОТИП КОМПАНІЇ -->
-                    <img src="https://foodline-production.com/wp-content/uploads/2021/10/3752781497_3752781497.webp" alt="Логотип компанії" id="print-logo" crossorigin="anonymous">
+                    <!-- ПРИМІТКА: Ваш логотип не завантажувався через обмеження CORS. -->
+                    <!-- Ми замінили його на Base64-кодовану SVG-заглушку для гарантії відображення. -->
+                    <!-- Якщо у вас є Base64-код вашого логотипу, вставте його замість цього: -->
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMzAiPgogICAgPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzMCIgZmlsbD0idHJhbnNwYXJlIj4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuMzUiIGZpbGw9IiMzMzMiIHN0cm9rZT0iIzNjNiIgc3Ryb2tlLXdpZHRoPSIuMjUiPkxPR08gLSBGVURMSU5FIFBST0RVQ1RJT048L3RleHQ+PC9zdmc+" alt="Логотип компанії" id="print-logo" style="border: 1px solid #ddd;">
                 </div>
                 <div class="meta-right-block">
                     <!-- Місце для даних Постачальника/Дати, вирівняне праворуч -->
@@ -336,7 +365,7 @@
             <!-- Фотографії дефекту -->
             <div id="print-photos"></div>
 
-            <!-- Блок підпису -->
+            <!-- БЛОК підпису -->
             <div class="signature-block">
                 <div>
                     <p>Контролер з якості</p>
